@@ -49,6 +49,11 @@ public class TimeUtil {
     public static String dateFormatYMD3 = "yy-MM-dd";
 
     /**
+     * 时间日期格式化到小时分钟
+     */
+    public static String dataFormatHm = "HH:mm";
+
+    /**
      * 时间日期格式化到年月日时分.中文显示
      */
     public static String dateFormatYMDHMofChinese = "yyyy年MM月dd日 HH:mm:ss";

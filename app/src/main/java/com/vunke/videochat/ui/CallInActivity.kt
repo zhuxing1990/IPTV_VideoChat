@@ -15,37 +15,46 @@ import android.view.KeyEvent
 import android.view.View
 import com.vunke.videochat.R
 import com.vunke.videochat.base.BaseConfig
+import com.vunke.videochat.callback.TalkCallBack
 import com.vunke.videochat.config.CallInfo
 import com.vunke.videochat.dao.ContactsDao
 import com.vunke.videochat.db.CallRecord
 import com.vunke.videochat.db.CallRecordTable
 import com.vunke.videochat.dialog.NotCameraDialog
+import com.vunke.videochat.linphone.LinphoneService
+import com.vunke.videochat.login.UserInfoUtil
 import com.vunke.videochat.manage.BackgroundManage
-import com.vunke.videochat.service.LinphoneMiniManager
+import com.vunke.videochat.manage.TalkManage
+import com.vunke.videochat.model.TalkBean
 import com.vunke.videochat.tools.AudioUtil
 import com.vunke.videochat.tools.CallRecordUtil
 import com.vunke.videochat.tools.FocusUtil
+import com.vunke.videochat.tools.TimeUtil
+import kotlinx.android.synthetic.main.activity_audio.*
 import kotlinx.android.synthetic.main.activity_call_in.*
+import org.linphone.core.Call
 
 /**
  * Created by zhuxi on 2019/11/20.
  */
 class  CallInActivity :AppCompatActivity(), View.OnClickListener{
     var TAG = "CallInActivity"
-    var instance:LinphoneMiniManager?=null
-    var message:String="";
+    var instance: LinphoneService?=null
+    var  firstCallTime :Long?=0
+    var message:String=""
     var callRecord:CallRecord = CallRecord()
     private var mReceiver: MainActivityReceiver? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_call_in)
+        firstCallTime = System.currentTimeMillis()
         initLinstener()
-        instance = LinphoneMiniManager.getInstance()
+        instance = LinphoneService.getInstance()
         initData()
         registerBroad()
         call_in_answer.requestFocus()
     }
-    var dialog:NotCameraDialog?=null ;
+    var dialog:NotCameraDialog?=null
     override fun onResume() {
         super.onResume()
         Log.i(TAG, "onResume: ")
@@ -76,17 +85,15 @@ class  CallInActivity :AppCompatActivity(), View.OnClickListener{
         registerReceiver(mReceiver, intentFilter)
     }
     fun initData(){
-        var intent = intent;
+        Log.i(TAG, "initData: ")
+        var intent = intent
         if (intent.hasExtra("message")){
             message = intent.getStringExtra("message")
             Log.i(TAG,"message:$message")
             try {
                 if (!TextUtils.isEmpty(message)){
-                    if (message.contains("<tel")){
-                        val data = message.split("<tel:")
-//                        for (i in data.indices) {
-//                            println(data[i])
-//                        }
+                    if (message.contains("tel")){
+                        val data = message.split("tel:")
                         val number = data[1].substring(0, data[1].indexOf(";"))
                         audio_in_phone.setText(number)
                         callRecord.call_phone = number
@@ -97,13 +104,26 @@ class  CallInActivity :AppCompatActivity(), View.OnClickListener{
                             audio_in_phone.setText(callRecord.call_name)
                         }
                     } else {
-                        val remoteAddress = instance!!.getmLinphoneCore().remoteAddress
-                        Log.i(TAG, "initData: remoteAddress:$remoteAddress")
-                        val userName = remoteAddress.userName
-                        audio_in_phone.setText(userName)
-                        val getDisplayName = remoteAddress.displayName
-                        callRecord.call_phone = userName
-                        callRecord.call_name = getDisplayName
+                        val currentCall = instance!!.getmCore().currentCall
+                        if (currentCall != null) {
+                            Log.i(TAG, "initData: 0")
+                            initDisplayName(currentCall)
+                        } else {
+                            for (call in LinphoneService.getCore().calls) {
+                                if (call != null && call.conference != null) {
+                                    if (LinphoneService.getCore().isInConference) {
+                                        Log.i(TAG, "initData: 1")
+                                        initDisplayName(currentCall!!)
+                                    }
+                                } else if (call != null && call !== currentCall) {
+                                    val state = call.state
+                                    if (state == Call.State.Paused || state == Call.State.PausedByRemote || state == Call.State.Pausing) {
+                                        Log.i(TAG, "initData: 2")
+                                        initDisplayName(currentCall!!)
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }catch (e:Exception){
@@ -119,7 +139,44 @@ class  CallInActivity :AppCompatActivity(), View.OnClickListener{
             }
         }
     }
-
+    private fun initDisplayName(currentCall: Call) {
+        val remoteAddress = currentCall.remoteAddress
+        if (remoteAddress != null) {
+            var displayName = remoteAddress.displayName
+            if (displayName == null || displayName.isEmpty()) {
+                displayName = remoteAddress.username
+                Log.i(TAG, "initDisplayName: getUsername:$displayName")
+            }
+            if (displayName == null || displayName.isEmpty()) {
+                displayName = remoteAddress.asStringUriOnly()
+                Log.i(TAG, "initDisplayName: asStringUriOnly:$displayName")
+            }
+            audio_in_phone.setText(displayName)
+            try {
+                if (displayName.contains("tel:")){
+                    val data = displayName.split("tel:")
+                    val number = data[1].substring(0, data[1].indexOf(";"))
+                    audio_in_phone.setText(number)
+                    callRecord.call_name = number
+                    callRecord.call_phone = number
+                    var contactsList = ContactsDao.getInstance(this).queryPhone(number)
+                    if (contactsList!=null&&contactsList.size!=0){
+                        callRecord.call_name = contactsList.get(0).user_name
+                        audio_in_phone.setText(callRecord.call_name)
+                    }
+                }else{
+                    callRecord.call_name = displayName
+                    callRecord.call_phone = ""
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        } else {
+            audio_in_phone.setText("Anonymous")
+            callRecord.call_name = "Anonymous"
+            callRecord.call_phone = ""
+        }
+    }
     override fun onClick(v: View) {
         when (v.id){
             R.id.call_in_hang_up ->{
@@ -143,7 +200,7 @@ class  CallInActivity :AppCompatActivity(), View.OnClickListener{
                         dialog = NotCameraDialog(this)
                         dialog!!.Builder(this).show()
                     }else if (numberOfCameras==0 && hasMicroPhone == true){
-                        instance!!.lilin_jie()
+                        instance!!.lilin_jie(false)
                         Log.i("call_in_answer","获取摄像头失败，自动转语音")
                         var intent = Intent(this@CallInActivity, AudioActivity::class.java)
                         if (!TextUtils.isEmpty(message)){
@@ -190,10 +247,29 @@ class  CallInActivity :AppCompatActivity(), View.OnClickListener{
         Log.i(TAG,"onDestroy")
         callRecord.call_time = System.currentTimeMillis().toString()
         if(callRecord.call_status != CallInfo.CALL_IN){
-            CallRecordUtil.updateCallRecord(this,callRecord);
+            CallRecordUtil.updateCallRecord(this,callRecord)
         }
         if (null!=dialog&&dialog!!.isShow()){
             dialog!!.cancel()
+        }
+        if(callRecord.call_status == CallInfo.CALL_IN||callRecord.call_status == CallInfo.CALL_MISSED){
+            var userInfoUtil = UserInfoUtil.getInstance(this)
+            val userId= userInfoUtil.getUserId()
+            var talkbean = TalkBean()
+            talkbean.userId=userId
+            talkbean.talkDuration= (0)
+            talkbean.call_phone = callRecord.call_phone
+            talkbean.call_status = callRecord.call_status
+            talkbean.talkTime = TimeUtil.getDateTime(TimeUtil.dateFormatYMDHMS,firstCallTime!!)
+            TalkManage.addConversationLog(talkbean,object: TalkCallBack {
+                override fun onSuccess() {
+
+                }
+
+                override fun OnFailed() {
+
+                }
+            })
         }
 //        CallRecordDao.getInstance(this).insertData(callRecord)
         unregisterReceiver(mReceiver)
@@ -280,7 +356,7 @@ class  CallInActivity :AppCompatActivity(), View.OnClickListener{
     }
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
         if(keyCode == KeyEvent.KEYCODE_BACK){
-            return false;
+            return false
         }
         return super.onKeyDown(keyCode, event)
     }

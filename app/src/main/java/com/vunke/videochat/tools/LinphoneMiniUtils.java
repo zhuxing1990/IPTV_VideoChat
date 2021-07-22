@@ -22,18 +22,25 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.media.AudioManager;
 import android.support.annotation.NonNull;
 import android.util.Log;
 import android.widget.Toast;
 
 import com.github.dfqin.grantor.PermissionListener;
 import com.github.dfqin.grantor.PermissionsUtil;
-import com.vunke.videochat.service.LinphoneMiniManager;
+import com.vunke.videochat.linphone.LinphoneService;
+
+import org.linphone.core.Core;
+import org.linphone.core.CoreListenerStub;
+import org.linphone.core.EcCalibratorStatus;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+
+import static android.media.AudioManager.STREAM_VOICE_CALL;
 
 public class LinphoneMiniUtils {
 	public static void copyIfNotExist(Context context, int ressourceId, String target) throws IOException {
@@ -56,26 +63,74 @@ public class LinphoneMiniUtils {
 		lInputStream.close();
 	}
 
-	public static void initEchoCancellation() {
+	public static void initEchoCancellation(final Context context) {
 		Log.i("提示", "initEchoCancellation: ");
-		if (LinphoneMiniManager.getInstance().getLC().needsEchoCalibration()){
+		if (LinphoneService.isReady()){
 			//回声消除
-			boolean isEchoCancellation =  true;
-			LinphoneMiniManager.getInstance().getLC().enableEchoCancellation(isEchoCancellation);
-			Log.i("提示", "ecCalibrationStatus: true");
+			LinphoneService.getInstance().getCore()
+					.addListener(
+							new CoreListenerStub() {
+								@Override
+								public void onEcCalibrationResult(
+										Core core, EcCalibratorStatus status, int delayMs) {
+									if (status == EcCalibratorStatus.InProgress) return;
+									core.removeListener(this);
+									AudioManager mAudioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+									mAudioManager.setSpeakerphoneOn(false);
+									mAudioManager.setMode(AudioManager.MODE_NORMAL);
+								}
+							});
+			startEcCalibration(context);
 		}
 	}
+
+	private static boolean mAudioFocused = false;
+	public static void startEcCalibration(Context context) {
+		Core core = LinphoneService.getCore();
+		if (core == null) {
+			return;
+		}
+		AudioManager mAudioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+		mAudioManager.setSpeakerphoneOn(true);
+		if (mAudioManager.getMode() == AudioManager.MODE_IN_COMMUNICATION) {
+			org.linphone.core.tools.Log.w("[Audio Manager] already in MODE_IN_COMMUNICATION, skipping...");
+			return;
+		}
+		org.linphone.core.tools.Log.d("[Audio Manager] Mode: MODE_IN_COMMUNICATION");
+
+		mAudioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
+		org.linphone.core.tools.Log.i("[Audio Manager] Set audio mode on 'Voice Communication'");
+		if (!mAudioFocused) {
+			int res =
+					mAudioManager.requestAudioFocus(
+							null, AudioManager.STREAM_VOICE_CALL, AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE);
+			org.linphone.core.tools.Log.d(
+					"[Audio Manager] Audio focus requested: "
+							+ (res == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
+							? "Granted"
+							: "Denied"));
+			if (res == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) mAudioFocused = true;
+		}
+		int oldVolume = mAudioManager.getStreamVolume(STREAM_VOICE_CALL);
+		int maxVolume = mAudioManager.getStreamMaxVolume(STREAM_VOICE_CALL);
+		mAudioManager.setStreamVolume(STREAM_VOICE_CALL, maxVolume, 0);
+		core.startEchoCancellerCalibration();
+		mAudioManager.setStreamVolume(STREAM_VOICE_CALL, oldVolume, 0);
+	}
+
 	public static void initLinphoneService(final Context context) {
 		if (PermissionsUtil.hasPermission(context, new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.CAMERA})) {
 			//有
-			Intent intentOne = new Intent(context, LinphoneMiniManager.class);
-			context.startService(intentOne);
+			if (!LinphoneService.isReady()){
+				Intent intentOne = new Intent(context, LinphoneService.class);
+				context.startService(intentOne);
+			}
 		} else {
 			PermissionsUtil.requestPermission(context, new PermissionListener() {
 
 				public void permissionGranted(@NonNull String[] permissions) {
 					//用户授予了
-					Intent intentOne = new Intent(context, LinphoneMiniManager.class);
+					Intent intentOne = new Intent(context, LinphoneService.class);
 					context.startService(intentOne);
 				}
 

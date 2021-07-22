@@ -54,20 +54,20 @@
         android:layout_height="wrap_content"
         android:clipChildren="false"
         android:clipToPadding="false">
+
         <EditText
             android:id="@+id/main_edit_num"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:ems="14"
             android:layout_centerHorizontal="true"
-            android:textColor="@android:color/white"
-            android:hint="请输入呼叫号码"
-            android:textSize="24sp"
-            android:text="13348618206"
-            android:lines="1"
-            android:textColorHint="@android:color/white"
             android:background="@drawable/edit_input_selector"
-            />
+            android:ems="14"
+            android:hint="请输入呼叫号码"
+            android:lines="1"
+            android:text="18973184027"
+            android:textColor="@android:color/white"
+            android:textColorHint="@android:color/white"
+            android:textSize="24sp" />
         <RelativeLayout
             android:id="@+id/main_rl3"
             android:layout_width="wrap_content"
@@ -252,7 +252,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerHorizontal="true"
-                android:background="@drawable/button_call_selector"
+                android:background="@mipmap/call_audio"
                 />
         </LinearLayout>
     </RelativeLayout>

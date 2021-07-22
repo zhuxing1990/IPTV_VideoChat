@@ -2,6 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.vunke.videochat">
 
+    <uses-permission
+        android:name="android.permission.AUTHENTICATE_ACCOUNTS"
+        android:maxSdkVersion="22" />
+    <uses-permission
+        android:name="android.permission.GET_ACCOUNTS"
+        android:maxSdkVersion="22" />
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- 语音通话权限 -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
@@ -42,23 +48,24 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.NoActionBar">
-        <activity android:name=".ui.MainActivity">
-<!--             <intent-filter>-->
-<!--             <action android:name="android.intent.action.MAIN" />-->
+        <activity android:name=".ui.MainActivity"
+            android:exported="true">
+             <intent-filter>
+             <action android:name="android.intent.action.MAIN" />
 
 
-<!--             <category android:name="android.intent.category.LAUNCHER" />-->
-<!--             </intent-filter>-->
+             <category android:name="android.intent.category.LAUNCHER" />
+             </intent-filter>
         </activity>
         <activity
             android:name=".ui.HomeActivity"
             android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.MAIN" />-->
 
-                <category android:name="android.intent.category.LAUNCHER" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
+<!--                <category android:name="android.intent.category.LAUNCHER" />-->
+<!--                <category android:name="android.intent.category.DEFAULT" />-->
+<!--            </intent-filter>-->
         </activity>
         <activity android:name=".ui.VideoActivity"
             android:launchMode="singleTop">
@@ -113,7 +120,8 @@
         <!-- &lt;!&ndash;                <data android:scheme="file" />&ndash;&gt; -->
         <!--  </intent-filter> -->
         <!-- </receiver> -->
-        <service android:name=".service.LinphoneMiniManager"></service>
+<!--        <service android:name=".service.LinphoneMiniManager"></service>-->
+        <service android:name=".linphone.LinphoneService"></service>
         <provider
             android:authorities="com.vunke.videochat.attn"
             android:name="com.vunke.videochat.provider.ContactsProvider"

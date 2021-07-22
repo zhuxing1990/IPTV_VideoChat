@@ -8,16 +8,15 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.hardware.Camera;
 import android.hardware.usb.UsbManager;
-import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.KeyEvent;
-import android.view.SurfaceHolder;
-import android.view.SurfaceView;
+import android.view.TextureView;
 import android.view.View;
+import android.view.WindowManager;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.widget.ImageView;
@@ -36,22 +35,19 @@ import com.vunke.videochat.db.CallRecordTable;
 import com.vunke.videochat.db.Contacts;
 import com.vunke.videochat.dialog.CallTimeDialog;
 import com.vunke.videochat.dialog.NotCameraDialog;
+import com.vunke.videochat.linphone.LinphoneService;
 import com.vunke.videochat.login.UserInfoUtil;
 import com.vunke.videochat.manage.TalkManage;
 import com.vunke.videochat.model.TalkBean;
-import com.vunke.videochat.service.LinphoneMiniManager;
 import com.vunke.videochat.tools.AudioUtil;
 import com.vunke.videochat.tools.CallRecordUtil;
 import com.vunke.videochat.tools.CameraUtil;
-import com.vunke.videochat.tools.LinphoneMiniUtils;
 import com.vunke.videochat.tools.TimeUtil;
 
-import org.linphone.core.LinphoneAddress;
-import org.linphone.core.LinphoneCall;
-import org.linphone.core.LinphoneCore;
-import org.linphone.core.LinphoneCoreException;
-import org.linphone.core.VideoSize;
-import org.linphone.mediastream.video.AndroidVideoWindowImpl;
+import org.linphone.core.Address;
+import org.linphone.core.Call;
+import org.linphone.core.Core;
+import org.linphone.core.VideoDefinition;
 import org.linphone.mediastream.video.capture.hwconf.AndroidCameraConfiguration;
 
 import java.text.SimpleDateFormat;
@@ -69,13 +65,12 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
 	private static final String TAG = "VideoActivity";
 	private VideoActivityReceiver mReceiver;
 
-	private SurfaceView mRenderingView,mPreviewView;
-	private AndroidVideoWindowImpl mAndroidVideoWindow;
+	private TextureView mRenderingView,mPreviewView;
 	private ImageView video_hang_up,video_mute,video_qiev;
 	//	private Button video_speaker;
-	private LinphoneMiniManager instance;
+	private LinphoneService instance;
 	private TextView video_mute_text;
-	private RelativeLayout call_video_r3;
+	private RelativeLayout call_video_r3,call_video_r4;
 	private CallRecord callRecord;
 	private NotCameraDialog dialog;
 	private ImageView video_switch;
@@ -86,21 +81,47 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_video);
-		instance = LinphoneMiniManager.getInstance();
+		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+		instance = LinphoneService.getInstance();
+		init();
 		initData();
 		initCamera();
-		init();
-		firstCallTime = System.currentTimeMillis();
-		startCallTimeTask();
+//		firstCallTime = System.currentTimeMillis();
+//		startCallTimeTask();
 		initCallTime();
-//		resizePreview();
 		initAlphaAnimation1();
 		initAlphaAnimation2();
 		initTimerOut();
 		registerBroadCast();
 		switchTime = System.currentTimeMillis();
-		initWindow();
-		LinphoneMiniUtils.initEchoCancellation();
+	}
+	private void init() {
+		mRenderingView = findViewById(R.id.id_video_rendering);
+		mPreviewView = findViewById(R.id.id_video_preview);
+		Core core = LinphoneService.getCore();
+		// We need to tell the core in which to display what
+		core.setNativeVideoWindowId(mRenderingView);
+		core.setNativePreviewWindowId(mPreviewView);
+		video_hang_up = findViewById(R.id.video_hang_up);
+		video_mute= findViewById(R.id.video_mute);
+		video_callTime= findViewById(R.id.video_callTime);
+//		video_speaker = findViewById(R.id.video_speaker);
+		video_qiev =findViewById(R.id.video_qiev);
+		video_hang_up.setOnClickListener(this);
+		video_mute.setOnClickListener(this);
+//		video_speaker.setOnClickListener(this);
+		video_qiev.setOnClickListener(this);
+
+		callvideo_rl1 = findViewById(R.id.callvideo_rl1);
+		callvideo_rl2 = findViewById(R.id.callvideo_rl2);
+
+		video_hang_up.requestFocus();
+		video_hang_up.bringToFront();
+		video_mute_text = findViewById(R.id.video_mute_text);
+		call_video_r3 = findViewById(R.id.call_video_r3);
+		call_video_r4 = findViewById(R.id.call_video_r4);
+		video_switch = findViewById(R.id.video_switch);
+		video_switch.setOnClickListener(this);
 	}
 
 	DisposableObserver<Long> timeOb=null;
@@ -154,9 +175,9 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
 			dialog.Builder(this).show();
 		}else if (numberOfCameras==0 &&hasMicroPhone == true){
 			Log.i(TAG, "initCamera: has microphone");
-			qiev();
+//			qiev();
 		}else{
-			CameraUtil.initCamera(instance);
+//			CameraUtil.initCamera(instance);
 		}
 	}
 	private String message;
@@ -172,9 +193,6 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
 				if (!TextUtils.isEmpty(message)){
 					if (message.contains("<tel:")){
 						String[] data = message.split("<tel:");
-//						for (i in data.indices) {
-//							println(data[i])
-//						}
 						String number = data[1].substring(0, data[1].indexOf(";"));
 						callRecord.call_phone = number;
 						callRecord.call_name = number;
@@ -183,12 +201,28 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
 							callRecord.call_name = contactsList.get(0).getUser_name();
 						}
 					}else{
-						LinphoneAddress remoteAddress = instance.getmLinphoneCore().getRemoteAddress();
-						Log.i(TAG, "initData: remoteAddress:"+remoteAddress);
-						String userName = remoteAddress.getUserName();
-						String getDisplayName = remoteAddress.getDisplayName();
-						callRecord.call_phone = userName;
-						callRecord.call_name = getDisplayName;
+						Call currentCall = instance.getCore().getCurrentCall();
+						if (currentCall!=null){
+							Log.i(TAG, "initData: 0");
+							initDisplayName(currentCall);
+						}else{
+							for (Call call : instance.getCore().getCalls()) {
+								if (call != null && call.getConference() != null) {
+									if (instance.getCore().isInConference()) {
+										Log.i(TAG, "initData: 1");
+										initDisplayName(currentCall);
+									}
+								} else if (call != null && call != currentCall) {
+									Call.State state = call.getState();
+									if (state == Call.State.Paused
+											|| state == Call.State.PausedByRemote
+											|| state == Call.State.Pausing) {
+										Log.i(TAG, "initData: 2");
+										initDisplayName(currentCall);
+									}
+								}
+							}
+						}
 					}
 				}
 			}catch (Exception e){
@@ -207,36 +241,48 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
 			String call_status = intent.getStringExtra(CallRecordTable.INSTANCE.getCALL_STATUS());;
 			if (!TextUtils.isEmpty(call_status)){
 				callRecord.call_status = call_status;
+				firstCallTime = System.currentTimeMillis();
+				startCallTimeTask();
 			}else{
 				callRecord.call_status = CallInfo.INSTANCE.getCALL_OUT();
 			}
 		}
 	}
-	private void init() {
-		mRenderingView = findViewById(R.id.id_video_rendering);
-		mPreviewView = findViewById(R.id.id_video_preview);
-		mPreviewView.getHolder().setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
-		video_hang_up = findViewById(R.id.video_hang_up);
-		video_mute= findViewById(R.id.video_mute);
-		video_callTime= findViewById(R.id.video_callTime);
-//		video_speaker = findViewById(R.id.video_speaker);
-		video_qiev =findViewById(R.id.video_qiev);
-		video_hang_up.setOnClickListener(this);
-		video_mute.setOnClickListener(this);
-//		video_speaker.setOnClickListener(this);
-		video_qiev.setOnClickListener(this);
 
-		callvideo_rl1 = findViewById(R.id.callvideo_rl1);
-		callvideo_rl2 = findViewById(R.id.callvideo_rl2);
-
-		video_hang_up.requestFocus();
-		video_hang_up.bringToFront();
-		video_mute_text = findViewById(R.id.video_mute_text);
-		call_video_r3 = findViewById(R.id.call_video_r3);
-
-		video_switch = findViewById(R.id.video_switch);
-		video_switch.setOnClickListener(this);
+	private void initDisplayName(Call currentCall) {
+		Address remoteAddress = currentCall.getRemoteAddress();
+		if (remoteAddress!=null){
+			String displayName = remoteAddress.getDisplayName();
+			if (TextUtils.isEmpty(displayName)) {
+				displayName = remoteAddress.getUsername();
+				Log.i(TAG, "initDisplayName: getUsername:"+displayName);
+			}
+			if (TextUtils.isEmpty(displayName)) {
+				Log.i(TAG, "initDisplayName: asStringUriOnly:"+displayName);
+				displayName = remoteAddress.asStringUriOnly();
+			}
+			callRecord.call_phone = displayName;
+			callRecord.call_name = displayName;
+			try {
+				if (displayName.contains("tel:")){
+					String[] data = displayName.split("tel:");
+					String number = data[1].substring(0, data[1].indexOf(";"));
+					callRecord.call_phone = number;
+					callRecord.call_name = number;
+					List<Contacts> contactsList = ContactsDao.Companion.getInstance(this).queryPhone(number);
+					if (contactsList!=null&&contactsList.size()!=0){
+						callRecord.call_name = contactsList.get(0).getUser_name();
+					}
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}else{
+			callRecord.call_name = "Anonymous";
+			callRecord.call_phone = "";
+		}
 	}
+
 
 
 	private CallTimeDialog callTimeDialog;
@@ -285,42 +331,7 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
 				.subscribe(callTimeObserver);
 	}
 
-	private void initWindow() {
-		fixZOrder(mRenderingView, mPreviewView);
-		mAndroidVideoWindow = new AndroidVideoWindowImpl(mRenderingView, mPreviewView, new AndroidVideoWindowImpl.VideoWindowListener() {
-			public void onVideoRenderingSurfaceReady(AndroidVideoWindowImpl vw, SurfaceView surface) {
-				Log.i(TAG, "onVideoRenderingSurfaceReady: ");
-				synchronized(vw.getSurface()){
-					mRenderingView = surface;
-					LinphoneMiniManager.getLC().setVideoWindow(vw);
-				}
-			}
 
-			public void onVideoRenderingSurfaceDestroyed(AndroidVideoWindowImpl vw) {
-				synchronized(vw.getSurface()){
-					LinphoneCore linphoneCore = LinphoneMiniManager.getLC();
-					if (linphoneCore != null) {
-						linphoneCore.setVideoWindow(null);
-					}
-				}
-			}
-
-			public void onVideoPreviewSurfaceReady(AndroidVideoWindowImpl vw, SurfaceView surface) {
-				Log.i(TAG, "onVideoPreviewSurfaceReady: ");
-				switchTime = System.currentTimeMillis();
-				synchronized(surface){
-					mPreviewView = surface;
-					LinphoneMiniManager.getLC().setPreviewWindow(mPreviewView);
-				}
-			}
-
-			public void onVideoPreviewSurfaceDestroyed(AndroidVideoWindowImpl vw) {
-				synchronized (vw.getSurface()){
-					LinphoneMiniManager.getLC().setPreviewWindow(null);
-				}
-			}
-		});
-	}
 
 	private void registerBroadCast() {
 		//广播
@@ -366,33 +377,52 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
 		}
 	};
 
-
 	private void resizePreview() {
-		LinphoneCore lc = LinphoneMiniManager.getLC();
-		if (lc.getCallsNb() > 0) {
-			LinphoneCall call = lc.getCurrentCall();
+		Log.i(TAG, "resizePreview: ");
+		Core core = LinphoneService.getCore();
+		if (core.getCallsNb() > 0) {
+			Call call = core.getCurrentCall();
 			if (call == null) {
-				call = lc.getCalls()[0];
+				call = core.getCalls()[0];
 			}
 			if (call == null) return;
 
 			DisplayMetrics metrics = new DisplayMetrics();
 			getWindowManager().getDefaultDisplay().getMetrics(metrics);
 			int screenHeight = metrics.heightPixels;
-			int maxHeight = screenHeight / 4; // Let's take at most 1/4 of the screen for the camera preview
+			int maxHeight =
+					screenHeight / 4; // Let's take at most 1/4 of the screen for the camera preview
 
-			VideoSize videoSize = call.getCurrentParams().getSentVideoSize(); // It already takes care of rotation
-			int width = videoSize.width;
-			int height = videoSize.height;
+			VideoDefinition videoSize =
+					call.getCurrentParams()
+							.getSentVideoDefinition(); // It already takes care of rotation
+			if (videoSize.getWidth() == 0 || videoSize.getHeight() == 0) {
+				Log.w(TAG,
+						"[Video] Couldn't get sent video definition, using default video definition");
+				videoSize = core.getPreferredVideoDefinition();
+			}
+			int width = videoSize.getWidth();
+			int height = videoSize.getHeight();
 
-			Log.d(TAG,"Video height is " + height + ", width is " + width);
+			Log.d(TAG,"[Video] Video height is " + height + ", width is " + width);
 			width = width * maxHeight / height;
 			height = maxHeight;
-			Log.d(TAG,"Video preview size set to " + width + "x" + height);
-			mPreviewView.getHolder().setFixedSize(width, height);
 
+			if (mPreviewView == null) {
+				Log.e(TAG,"[Video] mCaptureView is null !");
+				return;
+			}
+
+			RelativeLayout.LayoutParams newLp = new RelativeLayout.LayoutParams(width, height);
+			newLp.addRule(
+					RelativeLayout.ALIGN_PARENT_BOTTOM,
+					1); // Clears the rule, as there is no removeRule until API 17.
+			newLp.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, 1);
+			mPreviewView.setLayoutParams(newLp);
+			Log.d(TAG,"[Video] Video preview size set to " + width + "x" + height);
 		}
 	}
+
 	private boolean isMute = false;
 	@Override
 	public void onClick(View v) {
@@ -402,8 +432,8 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
 				break;
 			case R.id.video_mute:
 				isMute =!isMute;
-				LinphoneCore lc = instance.getmLinphoneCore();
-				lc.muteMic(isMute);
+				Core lc = instance.getmCore();
+				lc.enableMic(!isMute);
 				if (isMute){
 					Toast.makeText(this,"已静音",Toast.LENGTH_SHORT).show();
 					video_mute.setBackgroundResource(R.mipmap.mute2);
@@ -427,13 +457,13 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
 				break;
 			case R.id.video_switch:
 				try {
-					if (System.currentTimeMillis() - switchTime>10000){
-						switchTime = System.currentTimeMillis();
-						isSwitch =!isSwitch;
-						CameraUtil.changeScreen(isSwitch,callvideo_rl2,callvideo_rl1,mPreviewView,mRenderingView);
-					}else{
-						Toast.makeText(this,"请稍后尝试",Toast.LENGTH_SHORT).show();
-					}
+//					if (System.currentTimeMillis() - switchTime>10000){
+//						switchTime = System.currentTimeMillis();
+//						isSwitch =!isSwitch;
+//						CameraUtil.changeScreen(isSwitch,callvideo_rl2,callvideo_rl1,mPreviewView,mRenderingView);
+//					}else{
+//						Toast.makeText(this,"请稍后尝试",Toast.LENGTH_SHORT).show();
+//					}
 				}catch (Exception e){
 					e.printStackTrace();
 				}
@@ -444,19 +474,19 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
 	}
 
 	private void qiev() {
-		try {
-            instance.lilin_jie(false);
-            Intent intent = new Intent(this, AudioActivity.class);
-            if (!TextUtils.isEmpty(message)){
-                intent.putExtra("message",message);
-            }
-            intent.putExtra(CallRecordTable.INSTANCE.getCALL_STATUS(), CallInfo.INSTANCE.getCALL_IN());
-            startActivity(intent);
-//            instance.updateCall();
-            finish();
-        }catch (LinphoneCoreException e){
-            e.printStackTrace();
-        }
+//		try {
+//            instance.lilin_jie(false);
+//            Intent intent = new Intent(this, AudioActivity.class);
+//            if (!TextUtils.isEmpty(message)){
+//                intent.putExtra("message",message);
+//            }
+//            intent.putExtra(CallRecordTable.INSTANCE.getCALL_STATUS(), CallInfo.INSTANCE.getCALL_IN());
+//            startActivity(intent);
+////            instance.updateCall();
+//            finish();
+//        }catch (LinphoneCoreException e){
+//            e.printStackTrace();
+//        }
 	}
 
 	private long switchTime = 0;
@@ -477,27 +507,15 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
 	@Override
 	protected void onResume() {
 		super.onResume();
-		if (mRenderingView != null&&mRenderingView.getVisibility() == View.VISIBLE) {
-			((GLSurfaceView) mRenderingView).onResume();
-		}
-		if (mAndroidVideoWindow != null) {
-			synchronized (mAndroidVideoWindow) {
-				LinphoneMiniManager.getLC().setVideoWindow(mAndroidVideoWindow);
-			}
-		}
+		Log.i(TAG, "onResume: ");
+//		resizePreview();
+
 	}
 
 	@Override
 	protected void onPause() {
 		super.onPause();
-		if (mAndroidVideoWindow != null) {
-			synchronized (mAndroidVideoWindow) {
-				LinphoneMiniManager.getLC().setVideoWindow(null);
-			}
-		}
-		if (mRenderingView != null&&mRenderingView.getVisibility() == View.VISIBLE) {
-			((GLSurfaceView) mRenderingView).onPause();
-		}
+		Log.i(TAG, "onPause: ");
 	}
 
 	@Override
@@ -509,26 +527,30 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
 		if (UsbReceiver!=null){
 			unregisterReceiver(UsbReceiver);
 		}
-		callRecord.call_time = System.currentTimeMillis()+"".trim();
-		CallRecordUtil.updateCallRecord(this,callRecord);
+		Core core = instance.getCore();
+		if (core != null) {
+			core.setNativeVideoWindowId(null);
+			core.setNativePreviewWindowId(null);
+		}
 		mPreviewView = null;
 		mRenderingView = null;
-		if (mAndroidVideoWindow != null) {
-			mAndroidVideoWindow.release();
-			mAndroidVideoWindow = null;
-		}
+
 		if (null!=dialog&& dialog.isShow()){
 			dialog.cancel();
 		}
 		if (null!=callTimeDialog&&callTimeDialog.isShow()){
 			callTimeDialog.cancel();
 		}
+		callRecord.call_time = System.currentTimeMillis()+"".trim();
+		CallRecordUtil.updateCallRecord(this,callRecord);
 		clearCallTimeOut();
 		stopCallTimeTask();
 		UserInfoUtil userInfoUtil = UserInfoUtil.getInstance(this);
 		String userId= userInfoUtil.getUserId();
 		TalkBean talkbean = new TalkBean();
 		talkbean.setUserId(userId);
+		talkbean.setCall_phone(callRecord.call_phone);
+		talkbean.setCall_status(callRecord.call_status);
 		talkbean.setTalkDuration((System.currentTimeMillis()-firstCallTime)/1000);
 		talkbean.setTalkTime(TimeUtil.getDateTime(TimeUtil.dateFormatYMDHMS,firstCallTime)) ;
 		TalkManage.addConversationLog(talkbean,new TalkCallBack (){
@@ -575,6 +597,9 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
 				case "show_status":
 					Log.i(TAG, "onReceive: show_status");
 					String data = intent.getStringExtra("data");
+					if (TextUtils.isEmpty(data)){
+						return;
+					}
 					if (data.contains("Call terminated")){
 //						callRecord.call_status = CallInfo.INSTANCE.getCALL_RINGING();
 						finish();
@@ -588,14 +613,17 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
 //						callRecord.call_status = CallInfo.INSTANCE.getCALL_ANSWER();
 						finish();
 					}else if (data.contains("Call is updated by remote")){
-						instance.lilin_qie_updatecall();
-						Intent audioIntent = new Intent(context, AudioActivity.class);
-						if (!TextUtils.isEmpty(message)){
-							audioIntent.putExtra("message",message);
-						}
-						audioIntent.putExtra(CallRecordTable.INSTANCE.getCALL_STATUS(), CallInfo.INSTANCE.getCALL_IN());
-						startActivity(audioIntent);
-						finish();
+//						instance.lilin_qie_updatecall();
+//						Intent audioIntent = new Intent(context, AudioActivity.class);
+//						if (!TextUtils.isEmpty(message)){
+//							audioIntent.putExtra("message",message);
+//						}
+//						audioIntent.putExtra(CallRecordTable.INSTANCE.getCALL_STATUS(), CallInfo.INSTANCE.getCALL_IN());
+//						startActivity(audioIntent);
+//						finish();
+					}else if (data.equals("Connected")){
+						firstCallTime = System.currentTimeMillis();
+						startCallTimeTask();
 					}
 					break;
 				case "receive_usb_change":
@@ -653,80 +681,17 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
 		Log.i(TAG, "getCameras: "+ androidCameras.length);
 		return androidCameras.length;
 	}
-	DisposableObserver<Long> CameraObserver;
+//	DisposableObserver<Long> CameraObserver;
 	public void switchCamera(long nmb) {
 		Log.i(TAG, "switchCamera: ");
-		if (CameraObserver!=null&&!CameraObserver.isDisposed()){
-			CameraObserver.dispose();
-		}
-		CameraObserver = new DisposableObserver<Long>() {
-			@Override
-			public void onNext(Long aLong) {
-				Log.i(TAG, "switchCamera onNext: ");
-				try {
-					int camId = 0;
-					AndroidCameraConfiguration.AndroidCamera[] cameras = AndroidCameraConfiguration.retrieveCameras();
-					if (cameras!=null&&cameras.length!=0){
-						for (AndroidCameraConfiguration.AndroidCamera androidCamera : cameras) {
-							Log.i(TAG, "onNext: androidCamera:"+androidCamera.id);
-							camId = androidCamera.id;
-							Log.i(TAG, "onNext: set video device :"+camId);
-							instance.getLC().setVideoDevice(camId);
-						}
-						int videoDeviceId = instance.getLC().getVideoDevice();
-						Log.i(TAG, "switchCamera get videoDeviceId" + videoDeviceId);
-						videoDeviceId = (videoDeviceId + 1) % AndroidCameraConfiguration.retrieveCameras().length;
-//			Toast.makeText(getApplicationContext(), "默认Toast样"+mPreviewView+"式"+videoDeviceId,   Toast.LENGTH_SHORT).show();
-						//前置摄像头-1，后置摄像头-0
-						Log.i(TAG, "switchCamera: videoDeviceId:" + videoDeviceId);
-						instance.getLC().setVideoDevice(videoDeviceId);
-						instance.updateCall();
-						// previous call will cause graph reconstruction -> regive previewwindow
-
-						if (mPreviewView != null) {
-							Log.i(TAG, "switchCamera: set mPreviewView");
-							instance.getLC().setPreviewWindow(mPreviewView);
-						}
-					}else{
-						Log.i(TAG,"onNext get android Camera failed,not camera");
-						dialog = new NotCameraDialog(VideoActivity.this);
-						dialog.Builder(VideoActivity.this).show();
-					}
-
-
-				} catch (ArithmeticException ae) {
-					Log.e(TAG, "Cannot swtich camera : no camera");
-
-				}catch (NullPointerException e){
-					Log.e(TAG,"switchCamea onError",e);
-				}
-				onComplete();
-			}
-
-			@Override
-			public void onError(Throwable e) {
-				Log.i(TAG, "switchCamera onError: ");
-				dispose();
-				switchCamera(2);
-			}
-
-			@Override
-			public void onComplete() {
-				Log.i(TAG, "switchCamera onComplete: ");
-				dispose();
-			}
-		};
-		Observable.interval(nmb,TimeUnit.SECONDS)
-				.subscribeOn(Schedulers.io())
-				.observeOn(AndroidSchedulers.mainThread())
-				.subscribe(CameraObserver);
+		CameraUtil.initCamera(instance);
 	}
 
-	private   void fixZOrder(SurfaceView rendering, SurfaceView preview) {
-		rendering.setZOrderOnTop(false);
-		preview.setZOrderOnTop(true);
-		preview.setZOrderMediaOverlay(true); // Needed to be able to display control layout over
-	}
+//	private   void fixZOrder(SurfaceView rendering, SurfaceView preview) {
+//		rendering.setZOrderOnTop(false);
+//		preview.setZOrderOnTop(true);
+//		preview.setZOrderMediaOverlay(true); // Needed to be able to display control layout over
+//	}
 
 
 	private AlphaAnimation alphaAnimation0To1;
@@ -758,6 +723,8 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
 				if (!isDestroyed()) {
 					call_video_r3.clearAnimation();
 					call_video_r3.setAnimation(alphaAnimation1To0);
+					call_video_r4.clearAnimation();
+					call_video_r4.setAnimation(alphaAnimation1To0);
 					isOnTouch = false;
 					initTouch(isOnTouch);
 				}
@@ -768,12 +735,14 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
 			public void onError(Throwable e) {
 				dispose();
 				call_video_r3.clearAnimation();
+				call_video_r4.clearAnimation();
 				initTouch(true);
 			}
 
 			@Override
 			public void onComplete() {
 				dispose();
+				initTouch(true);
 			}
 		};
 		Observable.interval(8, TimeUnit.SECONDS)
@@ -799,6 +768,11 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
 		if (alphaAnimation1To0.equals(animation)) {
 			call_video_r3.clearAnimation();
 			call_video_r3.startAnimation(alphaAnimation0To1);
+		}
+		Animation animation1 = call_video_r4.getAnimation();
+		if (alphaAnimation1To0.equals(animation1)){
+			call_video_r4.clearAnimation();
+			call_video_r4.startAnimation(alphaAnimation0To1);
 		}
 	}
 	@Override

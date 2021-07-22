@@ -26,9 +26,10 @@ public class BaseConfig {
 
     public static final String ADD_ACCESS_LOG = "addAccessLog.do";
 
-    public static final  String ipaddr = "10.255.25.48";
-    public static final  String port = "5060";
-    public static final  String areaCode = "+86";
+//    public static final  String ipaddr = "10.255.25.48";
+//    public static final  String domain = "hu.ctcims.cn";
+//    public static final  String port = "5060";
+//    public static final  String areaCode = "+86";
     public static final  String lastCallNumber = "LAST_CALL_NUMBER";
 //    public static final  String NINE = "9";
     public static final  String RECEIVE_MAIN_ACTIVITY = "receive_main_activity";

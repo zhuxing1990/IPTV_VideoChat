@@ -27,6 +27,7 @@ import com.vunke.videochat.base.BaseConfig;
 import com.vunke.videochat.callback.RegisterCallBack;
 import com.vunke.videochat.dialog.MyDialog;
 import com.vunke.videochat.dialog.NotCameraDialog;
+import com.vunke.videochat.linphone.LinphoneService;
 import com.vunke.videochat.login.LoginCallBack;
 import com.vunke.videochat.login.LoginManage;
 import com.vunke.videochat.login.UserInfoUtil;
@@ -34,7 +35,7 @@ import com.vunke.videochat.manage.CallManage;
 import com.vunke.videochat.manage.RegisterManage;
 import com.vunke.videochat.model.LoginInfo;
 import com.vunke.videochat.receiver.RegisterReceiver;
-import com.vunke.videochat.service.LinphoneMiniManager;
+
 import com.vunke.videochat.tools.FocusUtil;
 import com.vunke.videochat.tools.SPUtils;
 import com.vunke.videochat.tools.Utils;
@@ -61,7 +62,7 @@ public class CallFragment extends Fragment implements View.OnClickListener {
     private Button call_openforuse;
     private ImageView call_call_video,call_call_audio;
     private Button call_btn_num1,call_btn_num2,call_btn_num3,call_btn_num4,call_btn_num5,call_btn_num6,call_btn_num7,call_btn_num8,call_btn_num9,call_btn_num0,call_btn_del2,call_product_des;
-    private LinphoneMiniManager instance;
+    private LinphoneService instance;
     private LoginManage loginManage;
     private String userName;
     private String passWord;
@@ -106,7 +107,7 @@ public class CallFragment extends Fragment implements View.OnClickListener {
     public void onResume() {
         super.onResume();
         Log.i(TAG, "onResume: ");
-        instance = LinphoneMiniManager.getInstance();
+        instance = LinphoneService.getInstance();
         if (instance!=null){
             boolean login = instance.isLogin();
             if (!login){
@@ -174,10 +175,10 @@ public class CallFragment extends Fragment implements View.OnClickListener {
     }
 
     private void initView(View view) {
-//        call_login_status = view.findViewById(R.id.call_login_status);
+//        call_login_status = views.findViewById(R.id.call_login_status);
 //        call_login_status.requestFocus();
         call_edit_num = view.findViewById(R.id.call_edit_num);
-//        call_relogin = view.findViewById(R.id.call_relogin);
+//        call_relogin = views.findViewById(R.id.call_relogin);
 //        call_relogin.setOnClickListener(this);
         call_username = view.findViewById(R.id.call_username);
         call_openforuse = view.findViewById(R.id.call_openforuse);
@@ -400,8 +401,8 @@ public class CallFragment extends Fragment implements View.OnClickListener {
             initLogin();
             return;
         }
-        if(!LinphoneMiniManager.isReady()){
-            instance = LinphoneMiniManager.getInstance();
+        if(!LinphoneService.isReady()){
+            instance = LinphoneService.getInstance();
         }
         stratLogin(userName,passWord);
     }
@@ -422,7 +423,7 @@ public class CallFragment extends Fragment implements View.OnClickListener {
                         call_username.setText("本机号码:0"+userName);
                     }
                     passWord = loginInfo.getData().getPassword();
-                    instance = LinphoneMiniManager.getInstance();
+                    instance = LinphoneService.getInstance();
                     if (instance!=null){
                         boolean login = instance.isLogin();
                         if (!login){

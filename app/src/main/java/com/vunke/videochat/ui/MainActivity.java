@@ -18,9 +18,9 @@ import android.widget.Toast;
 
 import com.vunke.videochat.R;
 import com.vunke.videochat.config.BaseConfig;
+import com.vunke.videochat.linphone.LinphoneService;
 import com.vunke.videochat.manage.CallManage;
 import com.vunke.videochat.manage.RegisterManage;
-import com.vunke.videochat.service.LinphoneMiniManager;
 import com.vunke.videochat.tools.FocusUtil;
 import com.vunke.videochat.tools.LinphoneMiniUtils;
 import com.vunke.videochat.tools.SPUtils;
@@ -46,7 +46,7 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
     private Button main_relogin;
     private Button main_btn_num1,main_btn_num2,main_btn_num3,main_btn_num4,main_btn_num5,main_btn_num6,main_btn_num7,main_btn_num8,main_btn_num9,main_btn_num0,main_btn_del,main_call_audio;
 
-    private LinphoneMiniManager instance;
+    private LinphoneService instance;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -210,8 +210,8 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
     }
 
     private void initRegister() {
-        if(!LinphoneMiniManager.isReady()){
-            instance = LinphoneMiniManager.getInstance();
+        if(!LinphoneService.isReady()){
+            instance = LinphoneService.getInstance();
         }
         try {
 //            String userName = "7318478702102";
@@ -229,8 +229,21 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
 //            String password = "UUAoe4OJ";
 //            String userName = "7354427957";
 //            String password = "rz4k6vYz";
-            String userName = "73188302837";
-            String password = "cT6Oel3m";
+//            String userName = "73188302837";
+//            String password = "cT6Oel3m";
+            String userName = "73188107880";
+            String password = "QEh8UMcj";
+
+//            String userName = "1015";
+//            String password = "9999";
+//            String userName = "1012";
+//            String password = "1234";
+//            String userName = "1006";
+//            String password = "aegis2020";
+
+//            String userName = "73184065729";
+//            String password = "VG7yTT0B";
+
             RegisterManage.Login(MainActivity.this,userName,password);
         }catch (Exception e){
             e.printStackTrace();
@@ -385,4 +398,6 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
         }
         finish();
     }
+
+
 }

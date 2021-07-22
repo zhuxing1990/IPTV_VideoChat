@@ -14,6 +14,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.vunke.videochat.R;
+import com.vunke.videochat.base.BaseConfig;
 import com.vunke.videochat.dao.ContactsDao;
 import com.vunke.videochat.db.Contacts;
 import com.vunke.videochat.db.ContactsTable;
@@ -22,6 +23,7 @@ import com.vunke.videochat.dialog.SetContactDialog;
 import com.vunke.videochat.manage.CallManage;
 import com.vunke.videochat.manage.ContactsManage;
 import com.vunke.videochat.receiver.ContactsReceiver;
+import com.vunke.videochat.tools.SPUtils;
 import com.vunke.videochat.ui.AddContactActivity;
 
 import java.util.List;
@@ -102,6 +104,7 @@ public class ContactsAdaper extends RecyclerView.Adapter<ContactsAdaper.Contacts
                     new NotCameraDialog(context).Builder(context).show();
                 }else{
                     String phone = list.get(position).getPhone();
+                    SPUtils.putString(mcontext, BaseConfig.lastCallNumber,phone);
                     CallManage.CallAudio(mcontext,phone);
                     setContactDialog.cancel();
                 }
@@ -117,6 +120,7 @@ public class ContactsAdaper extends RecyclerView.Adapter<ContactsAdaper.Contacts
                     new NotCameraDialog(context).Builder(context).show();
                 }else{
                     String phone = list.get(position).getPhone();
+                    SPUtils.putString(mcontext, BaseConfig.lastCallNumber,phone);
                     CallManage.CallVideo(context,phone);
                     setContactDialog.cancel();
                 }

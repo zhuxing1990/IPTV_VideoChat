@@ -129,7 +129,6 @@ public class HomeActivity extends FragmentActivity implements ViewPager.OnPageCh
         Log.i(TAG, "onResume: ");
         View rootView = findViewById(android.R.id.content);
         BackgroundManage.setBackground(this,rootView);
-
     }
 
     @Override
@@ -339,4 +338,6 @@ public class HomeActivity extends FragmentActivity implements ViewPager.OnPageCh
             }
         }
     }
+
+
 }

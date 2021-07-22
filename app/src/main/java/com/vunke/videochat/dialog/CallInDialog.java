@@ -22,12 +22,13 @@ import com.vunke.videochat.dao.ContactsDao;
 import com.vunke.videochat.db.CallRecord;
 import com.vunke.videochat.db.CallRecordTable;
 import com.vunke.videochat.db.Contacts;
-import com.vunke.videochat.service.LinphoneMiniManager;
+import com.vunke.videochat.linphone.LinphoneService;
 import com.vunke.videochat.tools.CallRecordUtil;
 import com.vunke.videochat.ui.AudioActivity;
 import com.vunke.videochat.ui.VideoActivity;
 
-import org.linphone.core.LinphoneAddress;
+import org.linphone.core.Address;
+import org.linphone.core.Call;
 
 import java.util.List;
 
@@ -42,9 +43,10 @@ public class CallInDialog implements View.OnKeyListener {
     private WindowManager.LayoutParams layoutParams;
     private View view;
     private RelativeLayout dialog_callin_view;
-    private LinphoneMiniManager instance;
+//    private LinphoneMiniManager instance;
+    private LinphoneService instance;
     private String message;
-    public CallInDialog(Context context, LinphoneMiniManager instance, String message){
+    public CallInDialog(Context context,LinphoneService instance, String message){
         this.context = context;
         this.instance = instance;
         this.message = message;
@@ -52,8 +54,8 @@ public class CallInDialog implements View.OnKeyListener {
         layoutParams = new WindowManager.LayoutParams();
         layoutParams.type = WindowManager.LayoutParams.TYPE_TOAST;
         layoutParams.format = PixelFormat.RGBA_8888;
-        // 设置浮动窗口不可聚焦
-//        layoutParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+        // 设置浮动窗口不可触摸 聚焦
+        layoutParams.flags = WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
         //设置窗口权重
         layoutParams.gravity = Gravity.RIGHT;
         layoutParams.x = 0;
@@ -132,12 +134,12 @@ public class CallInDialog implements View.OnKeyListener {
                             CallRecordUtil.updateCallRecord(context,callRecord);
                         }
                     }else{
-                        LinphoneAddress remoteAddress = instance.getmLinphoneCore().getRemoteAddress();
-                        Log.i(TAG, "initData: remoteAddress:"+remoteAddress);
-                        String userName = remoteAddress.getUserName();
-                        String getDisplayName = remoteAddress.getDisplayName();
-                        callRecord.call_phone = userName;
-                        callRecord.call_name = getDisplayName;
+//                        LinphoneAddress remoteAddress = instance.getmLinphoneCore().getRemoteAddress();
+//                        Log.i(TAG, "initData: remoteAddress:"+remoteAddress);
+//                        String userName = remoteAddress.getUserName();
+//                        String getDisplayName = remoteAddress.getDisplayName();
+//                        callRecord.call_phone = userName;
+//                        callRecord.call_name = getDisplayName;
                     }
                 }catch (Exception e){
                     e.printStackTrace();
@@ -173,15 +175,61 @@ public class CallInDialog implements View.OnKeyListener {
                     String number = data[1].substring(0, data[1].indexOf(";"));
                     textView.setText(number);
                 }else{
-                    LinphoneAddress remoteAddress = instance.getmLinphoneCore().getRemoteAddress();
-                    Log.i(TAG, "initData: remoteAddress:"+remoteAddress);
-                    String userName = remoteAddress.getUserName();
-                    String getDisplayName = remoteAddress.getDisplayName();
-                    textView.setText(getDisplayName);
+                    Call currentCall = instance.getCore().getCurrentCall();
+                    if (currentCall!=null){
+                        Log.i(TAG, "initData: 0");
+                        initDisplayName(currentCall,textView);
+                    }else{
+                        for (Call call : instance.getCore().getCalls()) {
+                            if (call != null && call.getConference() != null) {
+                                if (instance.getCore().isInConference()) {
+                                    Log.i(TAG, "initData: 1");
+                                    initDisplayName(currentCall,textView);
+                                }
+                            } else if (call != null && call != currentCall) {
+                                Call.State state = call.getState();
+                                if (state == Call.State.Paused
+                                        || state == Call.State.PausedByRemote
+                                        || state == Call.State.Pausing) {
+                                    Log.i(TAG, "initData: 2");
+                                    initDisplayName(currentCall,textView);
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }catch (Exception e){
             e.printStackTrace();
+        }
+    }
+    private void initDisplayName(Call currentCall,TextView textView) {
+        Address remoteAddress = currentCall.getRemoteAddress();
+        if (remoteAddress!=null){
+            String displayName = remoteAddress.getDisplayName();
+            if (TextUtils.isEmpty(displayName)) {
+                displayName = remoteAddress.getUsername();
+                Log.i(TAG, "initDisplayName: getUsername:"+displayName);
+            }
+            if (TextUtils.isEmpty(displayName)) {
+                Log.i(TAG, "initDisplayName: asStringUriOnly:"+displayName);
+                displayName = remoteAddress.asStringUriOnly();
+            }
+            textView.setText(displayName);
+            try {
+                if (displayName.contains("tel:")){
+                    String[] data = displayName.split("tel:");
+                    String number = data[1].substring(0, data[1].indexOf(";"));
+                    List<Contacts> contactsList = ContactsDao.Companion.getInstance(context).queryPhone(number);
+                    if (contactsList!=null&&contactsList.size()!=0){
+                        textView.setText(contactsList.get(0).getUser_name());
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }else{
+            textView.setText("Anonymous");
         }
     }
     private boolean isShow;

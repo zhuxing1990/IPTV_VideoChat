@@ -37,7 +37,9 @@ public class RegisterReceiver extends BroadcastReceiver {
                             if (callBack!=null){
                                 callBack.onSuccess();
                             }
-                        }else {
+                        }else if (loginStatus.contains("progress")) {
+                            Log.i(TAG, "onReceive: login in progress");
+                        } else {
                             if (callBack!=null){
                                 callBack.onFailed(loginStatus);
                             }

@@ -4,9 +4,10 @@ import android.util.Log;
 import android.view.SurfaceView;
 import android.widget.RelativeLayout;
 
-import com.vunke.videochat.service.LinphoneMiniManager;
+import com.vunke.videochat.linphone.LinphoneService;
 
-import org.linphone.mediastream.video.capture.hwconf.AndroidCameraConfiguration;
+import org.linphone.core.Call;
+import org.linphone.core.Core;
 
 /**
  * Created by zhuxi on 2020/8/27.
@@ -14,23 +15,44 @@ import org.linphone.mediastream.video.capture.hwconf.AndroidCameraConfiguration;
 
 public class CameraUtil {
     private static final String TAG = "CameraUtil";
-    public static void initCamera(LinphoneMiniManager instance) {
+    public static void initCamera(LinphoneService instance) {
         Log.i(TAG, "initCamera: ");
-       try {
-           AndroidCameraConfiguration.AndroidCamera[] cameras = AndroidCameraConfiguration.retrieveCameras();
-           if (cameras!=null&&cameras.length!=0){
-               for (AndroidCameraConfiguration.AndroidCamera androidCamera : cameras) {
-                   Log.i(TAG, "initCamera: androidCamera:"+androidCamera.id);
-                   Log.i(TAG, "initCamera: set video device :"+androidCamera.id);
-                   instance.getLC().setVideoDevice(androidCamera.id);
-               }
-           }else{
-               Log.i(TAG, "initCamera: get cameras is null");
-           }
-       }catch (Exception  e){
-           e.printStackTrace();
-           Log.i(TAG, "initCamera: failed");
-       }
+//       try {
+////           AndroidCameraConfiguration.AndroidCamera[] cameras = AndroidCameraConfiguration.retrieveCameras();
+////           if (cameras!=null&&cameras.length!=0){
+////               for (AndroidCameraConfiguration.AndroidCamera androidCamera : cameras) {
+////                   Log.i(TAG, "initCamera: androidCamera:"+androidCamera.id);
+////                   Log.i(TAG, "initCamera: set video device :"+androidCamera.id);
+////                   instance.getmCore().setVideoDevice(androidCamera.id);
+////               }
+////           }else{
+////               Log.i(TAG, "initCamera: get cameras is null");
+////           }
+////       }catch (Exception  e){
+////           e.printStackTrace();
+////           Log.i(TAG, "initCamera: failed");
+////       }
+        Core core = instance.getCore();
+        if (core == null) return;
+
+        String currentDevice = core.getVideoDevice();
+        org.linphone.core.tools.Log.i("[Call Manager] Current camera device is " + currentDevice);
+
+        String[] devices = core.getVideoDevicesList();
+        for (String d : devices) {
+            if (!d.equals(currentDevice) && !d.equals("StaticImage: Static picture")) {
+                org.linphone.core.tools.Log.i("[Call Manager] New camera device will be " + d);
+                core.setVideoDevice(d);
+                break;
+            }
+        }
+
+        Call call = core.getCurrentCall();
+        if (call == null) {
+            org.linphone.core.tools.Log.i("[Call Manager] Switching camera while not in call");
+            return;
+        }
+        call.update(null);
     }
 
     public static RelativeLayout.LayoutParams getSmallLayoutParams() {

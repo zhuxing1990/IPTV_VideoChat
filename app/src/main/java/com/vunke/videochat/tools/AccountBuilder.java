@@ -1,15 +1,21 @@
 package com.vunke.videochat.tools;
 
+import android.text.TextUtils;
 import android.util.Log;
 
-import org.linphone.core.LinphoneAddress;
-import org.linphone.core.LinphoneAuthInfo;
-import org.linphone.core.LinphoneCore;
-import org.linphone.core.LinphoneCoreException;
-import org.linphone.core.LinphoneCoreFactory;
-import org.linphone.core.LinphoneProxyConfig;
+import com.vunke.videochat.config.BaseConfig;
+
+import org.linphone.core.AVPFMode;
+import org.linphone.core.Address;
+import org.linphone.core.AuthInfo;
+import org.linphone.core.Core;
+import org.linphone.core.CoreException;
+import org.linphone.core.Factory;
+import org.linphone.core.ProxyConfig;
+import org.linphone.core.TransportType;
+
 public   class AccountBuilder {
-    	private LinphoneCore lc;
+    	private Core lc;
 		private String tempUsername;
 		private String tempDisplayName;
 		private String tempUserId;
@@ -22,7 +28,7 @@ public   class AccountBuilder {
 		private boolean tempOutboundProxy;
 		private String tempContactsParams;
 		private String tempExpire;
-		private LinphoneAddress.TransportType tempTransport;
+		private TransportType tempTransport;
 		private boolean tempAvpfEnabled = false;
 		private int tempAvpfRRInterval = 0;
 		private String tempQualityReportingCollector;
@@ -32,11 +38,11 @@ public   class AccountBuilder {
 		private boolean tempNoDefault = false;
 
 
-		public AccountBuilder(LinphoneCore lc) {
+		public AccountBuilder(Core lc) {
 			this.lc = lc;
 		}
 
-		public AccountBuilder setTransport(LinphoneAddress.TransportType transport) {
+		public AccountBuilder setTransport(TransportType transport) {
 			tempTransport = transport;
 			return this;
 		}
@@ -138,22 +144,23 @@ public   class AccountBuilder {
 
 		/**
 		 * Creates a new account
-		 * @throws LinphoneCoreException
+		 * @throws CoreException
 		 */
-		public void saveNewAccount(LinphoneCoreFactory lcFactory) throws LinphoneCoreException {
+		public void saveNewAccount(Factory lcFactory) throws CoreException {
 
-			if (tempUsername == null || tempUsername.length() < 1 || tempDomain == null || tempDomain.length() < 1) {
+			if (TextUtils.isEmpty(tempUsername) ||  TextUtils.isEmpty(tempDomain)) {
 				Log.i("提示","Skipping account save: username or domain not provided");
 				return;
 			}
-
-//			String identity = "sip:" + tempUsername + "@" + tempDomain;
+//			String identity = "sip:" + tempUsername + "@" + tempDomain;//测试
 //			String identity = "sip:"+ tempUsername;
-			String identity = "sip:" + tempUsername + "@hu.ctcims.cn";
-			String proxy = "sip:";
+			String identity = "sip:" + tempUsername + "@"+ BaseConfig.INSTANCE.getDomain();//正式
+
+//			String proxy = "sip:";
+			String proxy = "<sip:"+BaseConfig.INSTANCE.getIpaddr()+";transport=udp>";//正式
 
 
-			if (tempProxy == null) {
+			if (!TextUtils.isEmpty(tempDomain)) {
 				proxy += tempDomain;
 			} else {
 				if (!tempProxy.startsWith("sip:") && !tempProxy.startsWith("<sip:")
@@ -165,10 +172,10 @@ public   class AccountBuilder {
 
 			}
 			Log.i("saveNewAccount", "saveNewAccount: proxy:"+proxy);
-			LinphoneAddress proxyAddr = lcFactory.createLinphoneAddress(proxy);
+			Address proxyAddr = lcFactory.createAddress(proxy);
 
 			Log.i("saveNewAccount", "saveNewAccount: identity:"+identity);
-			LinphoneAddress identityAddr = lcFactory.createLinphoneAddress(identity);
+			Address identityAddr = lcFactory.createAddress(identity);
 
 			if (tempDisplayName != null) {
 				identityAddr.setDisplayName(tempDisplayName);
@@ -180,8 +187,10 @@ public   class AccountBuilder {
 
 			String route = tempOutboundProxy ? proxyAddr.asStringUriOnly() : null;
 
-
-			LinphoneProxyConfig prxCfg = lc.createProxyConfig(identityAddr.asString(), proxyAddr.asStringUriOnly(), route, tempEnabled);
+			ProxyConfig prxCfg = lc.createProxyConfig();
+			prxCfg.setServerAddr(proxyAddr.asString());
+			prxCfg.setIdentityAddress(identityAddr);
+			prxCfg.setRoute(route);
 
 			if (tempContactsParams != null)
 				prxCfg.setContactUriParameters(tempContactsParams);
@@ -189,40 +198,29 @@ public   class AccountBuilder {
 				try {
 					prxCfg.setExpires(Integer.parseInt(tempExpire));
 				} catch (NumberFormatException nfe) {
-					throw new LinphoneCoreException(nfe);
+					throw new CoreException(nfe);
 				}
 			}
 
-			prxCfg.enableAvpf(tempAvpfEnabled);
-			prxCfg.setAvpfRRInterval(tempAvpfRRInterval);
+			prxCfg.setAvpfMode(tempAvpfEnabled? AVPFMode.Enabled : AVPFMode.Disabled);
+			prxCfg.setAvpfRrInterval(tempAvpfRRInterval);
 			prxCfg.enableQualityReporting(tempQualityReportingEnabled);
 			prxCfg.setQualityReportingCollector(tempQualityReportingCollector);
 			prxCfg.setQualityReportingInterval(tempQualityReportingInterval);
 
-//			String regId = LinphonePreferences.instance().getPushNotificationRegistrationID();
-//			String appId = LinphonePreferences.instance().getString(R.string.push_sender_id);
-//			if (regId != null && LinphonePreferences.instance().isPushNotificationEnabled()) {
-//				String contactInfos = "app-id=" + appId + ";pn-type=" + LinphonePreferences.instance().getString(R.string.push_type) + ";pn-tok=" + regId + ";pn-silent=1";
-//				prxCfg.setContactUriParameters(contactInfos);
-//			}
 
 			if(tempPrefix != null){
 				prxCfg.setDialPrefix(tempPrefix);
 			}
-
-
 			if(tempRealm != null)
 				prxCfg.setRealm(tempRealm);
-
-//			tempUserId +="@hu.ctcims.cn";
-//			tempUsername+="@hu.ctcims.cn";
-
-			LinphoneAuthInfo authInfo =lcFactory .createAuthInfo(tempUsername, tempUserId, tempPassword, tempHa1, tempRealm, tempDomain);
-			authInfo.setUserId(tempUserId+ "@hu.ctcims.cn");
+			AuthInfo authInfo =lcFactory .createAuthInfo(tempUsername, tempUserId, tempPassword, tempHa1, tempRealm, tempDomain);
+			authInfo.setUserid(tempUserId+ "@"+ BaseConfig.INSTANCE.getDomain());//正式
 			lc.addProxyConfig(prxCfg);
 			lc.addAuthInfo(authInfo);
 			lc.setDefaultProxyConfig(prxCfg);
 			if (!tempNoDefault)
 				lc.setDefaultProxyConfig(prxCfg);
 		}
+
 	}

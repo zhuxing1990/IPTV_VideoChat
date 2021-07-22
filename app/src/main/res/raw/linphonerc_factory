@@ -1,56 +1,39 @@
+
+#
+#This file shall not contain path referencing package name, in order to be portable when app is renamed.
+#Paths to resources must be set from LinphoneManager, after creating LinphoneCore.
 [net]
 mtu=1300
-upload_bw=0
-download_bw=0
+force_ice_disablement=0
 
 [sip]
 guess_hostname=1
-inc_timeout=30
 register_only_when_network_is_up=1
-auto_net_state_mon=0
+auto_net_state_mon=1
 auto_answer_replacing_calls=1
-media_encryption_mandatory=0
 ping_with_options=0
-
-[rtp]
-audio_rtp_port=7076
-video_rtp_port=9078
-audio_jitt_comp=80
-video_jitt_comp=80
-nortp_timeout=20
-disable_upnp=1
+use_cpim=1
 
 [sound]
-playback_dev_id=
-ringer_dev_id=
-capture_dev_id=
-remote_ring=/data/data/com.vunke.videochat/files/ringback.wav
-local_ring=/data/data/com.vunke.videochat/files/oldphone_mono.wav
-dtmf_player_amp=0.1
-agc=0 #这个是自动增益，试过=1会啸叫
-###回声消除的参数如下###
-echocancellation=1 #回声消除这个必须=1，否则会听到自己说话的声音
-#ec_tail_len= 100 #尾长表示回声时长，越长需要cpu处理能力越强
-#ec_delay=0 #延时表示回声从话筒到扬声器时间 默认不写
-#ec_framesize=128 #采样数，肯定是刚好一个采样周期最好 默认不写
-####回声抑制####  
-#echolimiter=0 #这个不开会有空洞的声音，建议不开
-el_type=mic  #这个选full 和 mic 表示抑制哪个设备
-eq_location=hp #这个表示均衡器用在哪个设备
-#speaker_agc_enabled=0 #这个表示是否启用扬声器增益
-el_thres=0.001 #系统响应的阈值 意思在哪个阈值以上系统有响应处理
-#el_force=600 #控制收音范围 值越大收音越广 意思能否收到很远的背景音
-el_sustain=50 #控制发声到沉默时间 用于控制声音是否拉长 意思说完一个字是否被拉长丢包时希望拉长避免断断续续
-####降噪声####
-noisegate=1 #这个表示开启降噪音，不开会有背景音
-ng_thres=0.03 #这个表示声音这个阈值以上都可以通过，用于判断哪些是噪音
-ng_floorgain=0.03 #这个表示低于阈值的声音进行增益，用于补偿声音太小被吃掉
-####均衡器#### 这里就不详细描述这个更高级
-eq_active=0
-mic_eq_active=0
-mic_eq_gains=300:0.1:100 700:0.2:250
-spk_eq_active=0
-spk_eq_gains=300:0.1:100 700:0.2:250
+#remove this property for any application that is not Linphone public version itself
+ec_calibrator_cool_tones=1
+
+[video]
+displaytype=MSAndroidTextureDisplay
+auto_resize_preview_to_keep_ratio=1
 
 [misc]
-max_calls=10
+enable_basic_to_client_group_chat_room_migration=0
+enable_simple_group_chat_message_state=0
+aggregate_imdn=1
+notify_each_friend_individually_when_presence_received=0
+
+[app]
+activation_code_length=4
+prefer_basic_chat_room=1
+
+[assistant]
+xmlrpc_url=https://subscribe.linphone.org:444/wizard.php
+
+[lime]
+lime_update_threshold=-1

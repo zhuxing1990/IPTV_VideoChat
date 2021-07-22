@@ -15,6 +15,7 @@ public class TalkManage {
     public static void addConversationLog(TalkBean talkBean, final TalkCallBack talkCallBack){
         try {
             String json = new Gson().toJson(talkBean, TalkBean.class);
+            Log.i(TAG, "addConversationLog: json:"+json);
             OkGo.<String>post(BaseConfig.BASE_URL+BaseConfig.ADD_CONVERSTION_LOG)
                     .tag(TAG).upJson(json)
                     .execute(new StringCallback() {

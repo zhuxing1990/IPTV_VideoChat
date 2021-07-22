@@ -29,7 +29,7 @@
     <!--<string name="order_name">电视电话包月（0元/月）</string>-->
     <!--<string name="call_rate">本产品无月租费，通话产生的费用根据实际使用情况收取</string>-->
     <!--<string name="call_rate">产品资费:电视电话包月，月租费0元/月。通话费按当地固话收费标准，根据每月实际使用情况收取。来电显示功能费0元/月，2021年2月1日起5元/月。</string>-->
-    <string name="call_rate">产品资费：通话费按固话收费标准收取</string>
+    <string name="call_rate">产品资费：除实际通话费外无任何其他费用，通话费按当地固话标准收取。129元及以上电信套餐用户每月赠送100分钟免费通话时长。</string>
     <string name="open_des">用户信息验证</string>
     <!--<string name="open_des">电视电话开通后,话费将产生在:</string>-->
     <string name="card_des">身份证号：</string>
@@ -37,4 +37,39 @@
     <!--<string name="card_des">,身份证后四位</string>-->
     <string name="qrcode_to_add">用手机扫码录入联系人\n更方便哦~</string>
     <string name="input_user_card">(请将身份证后4位补充完整)</string>
+
+    <string name="linphone_address_mime_type" translatable="false">vnd.android.cursor.item/vnd.org.linphone.provider.sip_address</string>
+    <string name="sync_account_type" translatable="false">org.linphone.sync</string>
+    <string name="sync_account_name">linphone联系人</string>
+    <string name="error">异常</string>
+    <string name="content_description_incoming_file">传入文件</string>
+    <string name="pref_auto_download_disabled">永不</string>
+    <string name="pref_auto_download_always">总是</string>
+    <string name="pref_auto_download_under_size">If lighter than max size</string>
+    <string name="debug_popup_enable_logs">Enable logs</string>
+    <string name="debug_popup_disable_logs">Disable logs</string>
+    <string name="debug_popup_send_logs">Send logs</string>
+
+    <string-array name="limit_bitrate_entry_values">
+        <item>10</item>
+        <item>15</item>
+        <item>20</item>
+        <item>36</item>
+        <item>64</item>
+        <item>128</item>
+    </string-array>
+    <string-array name="limit_bitrate_entries">
+        <item>10 kbits/s</item>
+        <item>15 kbits/s</item>
+        <item>20 kbits/s</item>
+        <item>36 kbits/s</item>
+        <item>64 kbits/s</item>
+        <item>128 kbits/s</item>
+    </string-array>
+
+    <string-array name="video_preset_entries">
+        <item>default</item>
+        <item>high-fps</item>
+        <item>custom</item>
+    </string-array>
 </resources>

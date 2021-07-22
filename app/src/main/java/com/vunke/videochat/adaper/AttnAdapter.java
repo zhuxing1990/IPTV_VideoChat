@@ -15,6 +15,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.vunke.videochat.R;
+import com.vunke.videochat.base.BaseConfig;
 import com.vunke.videochat.config.CallInfo;
 import com.vunke.videochat.dao.CallRecordDao;
 import com.vunke.videochat.db.CallRecord;
@@ -22,6 +23,7 @@ import com.vunke.videochat.db.ContactsTable;
 import com.vunke.videochat.dialog.CallRecordDialog;
 import com.vunke.videochat.dialog.NotCameraDialog;
 import com.vunke.videochat.manage.CallManage;
+import com.vunke.videochat.tools.SPUtils;
 import com.vunke.videochat.tools.TimeUtil;
 import com.vunke.videochat.tools.Utils;
 import com.vunke.videochat.ui.AddContactActivity;
@@ -134,6 +136,7 @@ public class AttnAdapter extends RecyclerView.Adapter<AttnAdapter.AttnHolder> {
                     new NotCameraDialog(context).Builder(context).show();
                 }else{
                     String phone = list.get(position).getCall_phone();
+                    SPUtils.putString(mcontext, BaseConfig.lastCallNumber,phone);
                     CallManage.CallAudio(mcontext,phone);
                     callRecordDialog.cancel();
                 }
@@ -149,6 +152,7 @@ public class AttnAdapter extends RecyclerView.Adapter<AttnAdapter.AttnHolder> {
                     callRecordDialog.cancel();
                 }else{
                     String phone = list.get(position).getCall_phone();
+                    SPUtils.putString(mcontext, BaseConfig.lastCallNumber,phone);
                     CallManage.CallVideo(mcontext,phone);
                     callRecordDialog.cancel();
                 }
