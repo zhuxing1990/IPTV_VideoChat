@@ -11,7 +11,7 @@ android {
         minSdkVersion 19
         targetSdkVersion 26
         versionCode 66
-        versionName "66.0_724"
+        versionName "66.0_722_192.168.43.203"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 //        ndk { abiFilters "armeabi", "armeabi-v7a", "arm64-v8a" }// 其他忽略
     }

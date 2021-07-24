@@ -106,7 +106,6 @@ public class AccountUtil {
                     Log.i(TAG, "startLogin: init identity");
                     identity.setUsername(BaseConfig.INSTANCE.getAreaCode() + userName);//旧版本正式
 //                    identity.setUsername(userName);//新版本正式
-//                    identity.setUsername( userName);//测试
                     identity.setDomain(BaseConfig.INSTANCE.getDomain());//旧版本
 //                    identity.setDomain(domain);//新版本
                 }
@@ -123,7 +122,6 @@ public class AccountUtil {
                     Log.i(TAG, "startLogin: start add authInfo");
                     mAuthInfo.setUsername(BaseConfig.INSTANCE.getAreaCode() + userName);//旧版本正式
 //                    mAuthInfo.setUsername(userName);//新版本正式
-//                    mAuthInfo.setUsername(userName);//测试
                     mAuthInfo.setUserid(
                             BaseConfig.INSTANCE.getAreaCode()+    //旧版本正式
                                      userName//新版本正式

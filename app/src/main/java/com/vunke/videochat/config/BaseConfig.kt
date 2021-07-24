@@ -5,10 +5,10 @@ package com.vunke.videochat.config
  */
 object BaseConfig {
     val ipaddr = "10.255.25.48";//正式
-//    val ipaddr = "192.168.1.11";//测试
+//    val ipaddr = "192.168.43.203";//测试
 
     var domain = "hu.ctcims.cn"//正式
-//    var domain = "192.168.1.11"//测试
+//    var domain = "192.168.43.203"//测试
 
     val port = "5060"//正式
 //    val port = "7060"//测试

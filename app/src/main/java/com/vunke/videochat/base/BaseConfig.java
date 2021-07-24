@@ -5,8 +5,8 @@ package com.vunke.videochat.base;
  */
 
 public class BaseConfig {
-//   public static final String  BASE_URL = "http://10.255.26.3:8083/VideoPhone/";//旧基础URL
-   public static final String  BASE_URL = "http://10.255.26.4:8083/VideoPhone/";//新基础URL
+   public static final String  BASE_URL = "http://10.255.26.3:8083/VideoPhone/";//旧基础URL
+//   public static final String  BASE_URL = "http://10.255.26.4:8083/VideoPhone/";//新基础URL
 //   public static final String  BASE_URL = "http://10.255.26.3:8084/VideoPhone/";//基础URL
 //   public static final String  BASE_URL = "http://134.175.229.3:8083/VideoPhone/";//基础URL
 //   public static final String  BASE_URL = "http://124.232.136.236:8082/VideoPhone/";//test
@@ -16,8 +16,8 @@ public class BaseConfig {
     public static final String GET_USER_CONTACTS_LIST = "addressInfo";
     public static final String ADD_USER_CONTACTS = "addressAdd";
     public static final String DEL_USER_CONTACTS = "addressDel";
-//    public static final String LOGIN = "login.do";//旧登录接口
-    public static final String LOGIN = "videophone/login";//新登录接口
+    public static final String LOGIN = "login.do";//旧登录接口
+//    public static final String LOGIN = "videophone/login";//新登录接口
 
     public static final String GET_OPTIONAL_ACCOUNT ="oai/getOptionalAccount";
 
