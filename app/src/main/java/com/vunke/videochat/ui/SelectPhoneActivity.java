@@ -61,7 +61,7 @@ public class SelectPhoneActivity extends AppCompatActivity {
             json.put("userId",userInfoUtil.getUserId())
                 .put("userToken",userInfoUtil.getUserToken());
             OkGo.<String>post(BaseConfig.BASE_URL+BaseConfig.GET_OPTIONAL_ACCOUNT)
-                    .tag(this).upJson(json)
+                    .tag(this).upString(json.toString())
                     .execute(new StringCallback() {
                         @Override
                         public void onSuccess(Response<String> response) {

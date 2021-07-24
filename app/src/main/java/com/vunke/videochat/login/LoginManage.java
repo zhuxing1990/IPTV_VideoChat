@@ -28,7 +28,11 @@ public class LoginManage {
         try {
             JSONObject json = new JSONObject();
             json.put("userId",userId);
-            OkGo.<String>post(BaseConfig.BASE_URL+ BaseConfig.LOGIN).upJson(json).tag(TAG)
+            OkGo.<String>post(BaseConfig.BASE_URL+ BaseConfig.LOGIN)
+//                    .upJson(json.toString())
+                    .upString(json.toString())
+//                    .params(json.toString())
+                    .tag(TAG)
             .execute(new StringCallback() {
                 @Override
                 public void onSuccess(Response<String> response) {
@@ -81,7 +85,7 @@ public class LoginManage {
             JSONObject json = new JSONObject();
             json.put("userAccount",userId);
             json.put("loginStatus",loginStatus);
-            OkGo.<String>post(BaseConfig.BASE_URL+BaseConfig.ADD_ACCESS_LOG).upJson(json).tag(TAG).retryCount(2)
+            OkGo.<String>post(BaseConfig.BASE_URL+BaseConfig.ADD_ACCESS_LOG).upString(json.toString()).tag(TAG).retryCount(2)
                     .execute(new StringCallback() {
                         @Override
                         public void onSuccess(Response<String> response) {

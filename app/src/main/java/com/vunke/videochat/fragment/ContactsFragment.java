@@ -130,7 +130,7 @@ public class ContactsFragment extends Fragment implements View.OnClickListener,V
             json.put("userId",userId);
             OkGo.<String>post(BaseConfig.BASE_URL+ BaseConfig.GET_USER_CONTACTS_LIST)
                     .tag(this)
-                    .upJson(json)
+                    .upString(json.toString())
                     .execute(new StringCallback() {
                         @Override
                         public void onSuccess(Response<String> response) {

@@ -35,7 +35,7 @@ public class RegisterManage {
 //            Toast.makeText(context,"登录异常,请重试!",Toast.LENGTH_SHORT).show();
 //        }
 //    }
-    public static void Login(Context context, String userName, String passWord) {
+    public static void Login(Context context, String userName, String passWord,String domain) {
         LinphoneService instance = LinphoneService.getInstance();
         Core core = instance.getCore();
         for (ProxyConfig linphoneProxyConfig : core.getProxyConfigList()) {
@@ -51,13 +51,14 @@ public class RegisterManage {
             String basePath = context.getFilesDir().getAbsolutePath();
             AccountUtil.reloadAccountCreatorConfig(basePath + "/default_assistant_create.rc");
             AccountCreator accountCreator = core.createAccountCreator("https://subscribe.linphone.org:444/wizard.php");
-            accountCreator.setDomain(BaseConfig.INSTANCE.getIpaddr());
+            accountCreator.setDomain(BaseConfig.INSTANCE.getIpaddr());//旧版本
+//            accountCreator.setDomain(domain);//新版本
             accountCreator.setTransport(TransportType.Udp);
             accountCreator.setUsername(userName);
             accountCreator.setPassword(passWord);
             AccountUtil.createProxyConfigAndLeaveAssistant(context, accountCreator);
         }
-        AccountUtil.startLogin(context,userName, passWord);
+        AccountUtil.startLogin(context,userName, passWord,domain);
     }
 
 //    public static void Login(Context context,String userName,String passWord){

@@ -50,7 +50,7 @@ public class OrderActivity extends AppCompatActivity {
             json.put("userId",userInfoUtil.getUserId())
                     .put("userToken",userInfoUtil.getUserToken());
             OkGo.<String>post(BaseConfig.BASE_URL+BaseConfig.QUY_BY_CUSTOMER_DATA).tag(this)
-                    .upJson(json)
+                    .upString(json.toString())
                     .execute(new StringCallback() {
                         @Override
                         public void onSuccess(Response<String> response) {

@@ -37,7 +37,7 @@ public class LoginInfo {
     public class DataBean{
     private String userName;
     private String password;
-
+    private String domain;
         public String getUserName() {
             return userName;
         }
@@ -54,9 +54,30 @@ public class LoginInfo {
             this.password = password;
         }
 
+        public String getDomain() {
+            return domain;
+        }
+
+        public void setDomain(String domain) {
+            this.domain = domain;
+        }
+
         @Override
         public String toString() {
-            return super.toString();
+            return "DataBean{" +
+                    "userName='" + userName + '\'' +
+                    ", password='" + password + '\'' +
+                    ", domain='" + domain + '\'' +
+                    '}';
         }
+    }
+
+    @Override
+    public String toString() {
+        return "LoginInfo{" +
+                "data=" + data +
+                ", code=" + code +
+                ", message='" + message + '\'' +
+                '}';
     }
 }

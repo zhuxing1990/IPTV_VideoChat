@@ -36,7 +36,7 @@ public class ContactsManage {
             json.put("data",jsonArray);
 
             OkGo.<String>post(BaseConfig.BASE_URL+BaseConfig.ADD_USER_CONTACTS).tag(TAG)
-                    .upJson(json)
+                    .upString(json.toString())
                     .execute(new StringCallback() {
                         @Override
                         public void onSuccess(Response<String> response) {
@@ -67,7 +67,7 @@ public class ContactsManage {
             json.put("friendsName",contacts.getUser_name());
             json.put("friendsNumber",contacts.getPhone());
             OkGo.<String>post(BaseConfig.BASE_URL+BaseConfig.DEL_USER_CONTACTS).tag(TAG)
-                    .upJson(json)
+                    .upString(json.toString())
                     .execute(new StringCallback() {
                         @Override
                         public void onSuccess(Response<String> response) {

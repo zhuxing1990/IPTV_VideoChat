@@ -10,8 +10,8 @@ android {
         applicationId "com.vunke.videochat"
         minSdkVersion 19
         targetSdkVersion 26
-        versionCode 65
-        versionName "65_714"
+        versionCode 66
+        versionName "66.0_724"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 //        ndk { abiFilters "armeabi", "armeabi-v7a", "arm64-v8a" }// 其他忽略
     }
@@ -75,6 +75,7 @@ dependencies {
     implementation 'com.android.support.constraint:constraint-layout:1.1.3'
 
 //    implementation(name: 'linphone-sdk-android-release', ext: 'aar')
+//    implementation(name: 'linphone-sdk-android-debug', ext: 'aar')
     implementation(name: 'linphone-sdk-android-4.4.32', ext: 'aar')
 //    implementation(name: 'liblinphone-sdk', ext: 'aar')
 //    implementation(name: 'test', ext: 'aar')

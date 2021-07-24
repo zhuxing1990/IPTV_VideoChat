@@ -66,6 +66,7 @@ public class CallFragment extends Fragment implements View.OnClickListener {
     private LoginManage loginManage;
     private String userName;
     private String passWord;
+    private String domain;
     private UserInfoUtil userInfoUtil;
     private NotCameraDialog dialog;
     @Nullable
@@ -97,7 +98,7 @@ public class CallFragment extends Fragment implements View.OnClickListener {
             super.handleMessage(msg);
             switch (msg.what){
                 case 0x2169:
-                    stratLogin(userName,passWord);
+                    stratLogin(userName,passWord,domain);
                     break;
             }
         }
@@ -119,9 +120,9 @@ public class CallFragment extends Fragment implements View.OnClickListener {
 //        }
     }
 
-    private void stratLogin(String userName, String passWord) {
+    private void stratLogin(String userName, String passWord,String domain) {
         try {
-            RegisterManage.Login(getActivity(),userName,passWord);
+            RegisterManage.Login(getActivity(),userName,passWord,domain);
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -159,7 +160,7 @@ public class CallFragment extends Fragment implements View.OnClickListener {
                     if (System.currentTimeMillis()-reLoginTimes>30000){
                         Log.i(TAG, "registerBroad onFailed: start relogin");
                         reLoginTimes = System.currentTimeMillis();
-                        stratLogin(userName,passWord);
+                        stratLogin(userName,passWord,domain);
                     }else{
                         Log.i(TAG, "onFailed: ");
                         handler.sendEmptyMessageDelayed(0x2169,30000);
@@ -404,7 +405,7 @@ public class CallFragment extends Fragment implements View.OnClickListener {
         if(!LinphoneService.isReady()){
             instance = LinphoneService.getInstance();
         }
-        stratLogin(userName,passWord);
+        stratLogin(userName,passWord,domain);
     }
     private void initLogin() {
         Log.i(TAG, "initLogin: ");
@@ -423,12 +424,13 @@ public class CallFragment extends Fragment implements View.OnClickListener {
                         call_username.setText("本机号码:0"+userName);
                     }
                     passWord = loginInfo.getData().getPassword();
+                    domain = loginInfo.getData().getDomain();
                     instance = LinphoneService.getInstance();
                     if (instance!=null){
                         boolean login = instance.isLogin();
                         if (!login){
                             Log.i(TAG, "onSuccess: not login ,start login1");
-                            stratLogin(userName,passWord);
+                            stratLogin(userName,passWord,domain);
                             call_openforuse.setVisibility(View.GONE);
                         }else{
                             Log.i(TAG, "onSuccess: is login,don't login");
@@ -436,7 +438,7 @@ public class CallFragment extends Fragment implements View.OnClickListener {
                         }
                     }else{
                         Log.i(TAG, "onSuccess: not login ,start login2");
-                        stratLogin(userName,passWord);
+                        stratLogin(userName,passWord,domain);
                         call_openforuse.setVisibility(View.GONE);
                     }
                     ((HomeActivity) getActivity()).home_call_rl.requestFocus();

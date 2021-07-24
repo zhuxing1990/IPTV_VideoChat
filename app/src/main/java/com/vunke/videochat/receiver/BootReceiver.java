@@ -73,8 +73,9 @@ public class BootReceiver extends BroadcastReceiver {
                     //用户已经注册，可以正常登录
                    String userName = loginInfo.getData().getUserName();
                     String passWord = loginInfo.getData().getPassword();
+                    String domain = loginInfo.getData().getDomain();
                     try {
-                        RegisterManage.Login(context,userName,passWord);
+                        RegisterManage.Login(context,userName,passWord,domain);
                     }catch (Exception e){
                         e.printStackTrace();
                     }

@@ -12,6 +12,7 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.vunke.videochat.R;
 import com.vunke.videochat.config.BaseConfig;
@@ -131,7 +132,6 @@ public class LinphoneService extends Service {
         // Core is ready to be configured
         configureCore();
 //        setPreferredVideoSize("cif");
-        H264Helper.setH264Mode(H264Helper.MODE_AUTO, mCore);
         mCore.setVideoPreset("default");
         mCore.setPreferredFramerate(0);
         mCore.setUploadBandwidth(0);
@@ -139,7 +139,9 @@ public class LinphoneService extends Service {
         setPreferredVideoSize("vga");
         setInitiateVideoCall(true);
         setAutomaticallyAcceptVideoRequests(true);
-
+//        H264Helper.setH264Mode(H264Helper.MODE_AUTO, mCore);
+        Toast.makeText(this, "MODE_MEDIA_CODEC", Toast.LENGTH_SHORT).show();
+        H264Helper.setH264Mode(H264Helper.MODE_MEDIA_CODEC, mCore);
     }
     public Config initConfig() {
         String basePath = getFilesDir().getAbsolutePath();

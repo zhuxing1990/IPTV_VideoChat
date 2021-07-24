@@ -191,8 +191,9 @@ class  CallInActivity :AppCompatActivity(), View.OnClickListener{
 //                Toast.makeText(this,"接听",Toast.LENGTH_SHORT).show()
 //                callRecord.call_status = CallInfo.CALL_ANSWER
                 try {
-                    val numberOfCameras = Camera.getNumberOfCameras()
+                    var numberOfCameras = Camera.getNumberOfCameras()
                     Log.i(TAG, "get camera number:" + numberOfCameras)
+//                    numberOfCameras= 1;
                     val hasMicroPhone = AudioUtil.hasMicroPhone(this)
                     if (numberOfCameras == 0&&hasMicroPhone == false) {
 //                        NotCameraDialog(this).Builder().show()

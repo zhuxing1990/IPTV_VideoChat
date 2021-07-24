@@ -75,7 +75,7 @@ public class AccountUtil {
         }
         return null;
     }
-    public static void startLogin(Context context,String userName, String passWord) {
+    public static void startLogin(Context context,String userName, String passWord,String domain) {
         Log.i(TAG, "startLogin: ");
         ProxyConfig mProxyConfig = null;
         AuthInfo mAuthInfo = null;
@@ -104,9 +104,11 @@ public class AccountUtil {
                 Address identity = mProxyConfig.getIdentityAddress();
                 if (identity != null) {
                     Log.i(TAG, "startLogin: init identity");
-                    identity.setUsername(BaseConfig.INSTANCE.getAreaCode() + userName);//正式
+                    identity.setUsername(BaseConfig.INSTANCE.getAreaCode() + userName);//旧版本正式
+//                    identity.setUsername(userName);//新版本正式
 //                    identity.setUsername( userName);//测试
-                    identity.setDomain(BaseConfig.INSTANCE.getDomain());
+                    identity.setDomain(BaseConfig.INSTANCE.getDomain());//旧版本
+//                    identity.setDomain(domain);//新版本
                 }
                 NatPolicy natPolicy = mProxyConfig.getNatPolicy();
                 if (natPolicy == null) {
@@ -119,22 +121,25 @@ public class AccountUtil {
 
                 if (mAuthInfo != null) {
                     Log.i(TAG, "startLogin: start add authInfo");
-                    mAuthInfo.setUsername(BaseConfig.INSTANCE.getAreaCode() + userName);//正式
+                    mAuthInfo.setUsername(BaseConfig.INSTANCE.getAreaCode() + userName);//旧版本正式
+//                    mAuthInfo.setUsername(userName);//新版本正式
 //                    mAuthInfo.setUsername(userName);//测试
                     mAuthInfo.setUserid(
-                            BaseConfig.INSTANCE.getAreaCode()+    //正式
-                                     userName
-                                    + "@"
-                                    + BaseConfig.INSTANCE.getDomain());
+                            BaseConfig.INSTANCE.getAreaCode()+    //旧版本正式
+                                     userName//新版本正式
+                                    + "@"+ BaseConfig.INSTANCE.getDomain()//旧版本正式
+                                    );
                     mAuthInfo.setHa1(null);
                     mAuthInfo.setPassword(passWord);
                     // Reset algorithm to generate correct hash depending on
                     // algorithm set in next to come 401
                     mAuthInfo.setAlgorithm(null);
-                    mAuthInfo.setDomain(BaseConfig.INSTANCE.getDomain());
+                    mAuthInfo.setDomain(BaseConfig.INSTANCE.getDomain());//旧版本正式
+//                    mAuthInfo.setDomain(domain);//新版本正式
                 }
                 String proxystr =
-                        "<sip:" + BaseConfig.INSTANCE.getIpaddr() + ";transport=udp>"; // 正式
+                        "<sip:" + BaseConfig.INSTANCE.getIpaddr() + ";transport=udp>"; //旧版本正式
+//                        "<sip:" + domain + ";transport=udp>"; //新版本正式
                 Address proxy = Factory.instance().createAddress(proxystr);
                 mProxyConfig.setServerAddr(proxy.asString());
                 mProxyConfig.setExpires(3600);

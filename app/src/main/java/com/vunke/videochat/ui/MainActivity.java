@@ -13,6 +13,7 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -44,7 +45,8 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
     private TextView main_login_status;
     private EditText main_edit_num;
     private Button main_relogin;
-    private Button main_btn_num1,main_btn_num2,main_btn_num3,main_btn_num4,main_btn_num5,main_btn_num6,main_btn_num7,main_btn_num8,main_btn_num9,main_btn_num0,main_btn_del,main_call_audio;
+    private Button main_btn_num1,main_btn_num2,main_btn_num3,main_btn_num4,main_btn_num5,main_btn_num6,main_btn_num7,main_btn_num8,main_btn_num9,main_btn_num0,main_btn_del;
+    private ImageView main_call_audio,main_call_video;
 
     private LinphoneService instance;
 
@@ -80,6 +82,7 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
         main_btn_num0 = findViewById(R.id.main_btn_num0);
         main_btn_del = findViewById(R.id.main_btn_del);
         main_call_audio = findViewById(R.id.main_call_audio);
+        main_call_video = findViewById(R.id.main_call_video);
         main_btn_num1.setOnClickListener(this);
         main_btn_num2.setOnClickListener(this);
         main_btn_num3.setOnClickListener(this);
@@ -99,19 +102,26 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
             }
         });
         main_call_audio.setOnClickListener(this);
+        main_call_video.setOnClickListener(this);
         main_call_audio.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
-                FocusUtil.INSTANCE.setFocus(hasFocus,v,getApplicationContext());
+                FocusUtil.INSTANCE.setFocus(hasFocus,v,MainActivity.this);
             }
         });
-        main_call_audio.setOnLongClickListener(new View.OnLongClickListener() {
+        main_call_video.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
-            public boolean onLongClick(View v) {
-                startCall(true);
-                return false;
+            public void onFocusChange(View v, boolean hasFocus) {
+                FocusUtil.INSTANCE.setFocus(hasFocus,v,MainActivity.this);
             }
         });
+//        main_call_audio.setOnLongClickListener(new View.OnLongClickListener() {
+//            @Override
+//            public boolean onLongClick(View v) {
+//                startCall(false);
+//                return false;
+//            }
+//        });
     }
 
 
@@ -183,6 +193,9 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
             case R.id.main_call_audio:
                 startCall(false);
                 break;
+            case R.id.main_call_video:
+                startCall(true);
+                break;
             default:
                 break;
         }
@@ -231,8 +244,8 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
 //            String password = "rz4k6vYz";
 //            String userName = "73188302837";
 //            String password = "cT6Oel3m";
-            String userName = "73188107880";
-            String password = "QEh8UMcj";
+//            String userName = "73188107880";
+//            String password = "QEh8UMcj";
 
 //            String userName = "1015";
 //            String password = "9999";
@@ -241,10 +254,15 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
 //            String userName = "1006";
 //            String password = "aegis2020";
 
-//            String userName = "73184065729";
-//            String password = "VG7yTT0B";
+            String userName = "73184065729";
+            String password = "VG7yTT0B";
+//            String userName = "73188107892";
+//            String password = "CDRnO48N";
 
-            RegisterManage.Login(MainActivity.this,userName,password);
+//            String userName = "73188300623";
+//            String password = "r9KL73Cb";
+
+            RegisterManage.Login(MainActivity.this,userName,password,BaseConfig.INSTANCE.getDomain());
         }catch (Exception e){
             e.printStackTrace();
         }

@@ -49,7 +49,7 @@ public class SelectPhoneManage {
                 .put("fixedLineNumber",PhoneNumber)
                 .put("userToken",userInfoUtil.getUserToken());
             OkGo.<String>post(BaseConfig.BASE_URL+BaseConfig.FIXE_LINE_BINDING)
-                    .tag(TAG).upJson(json)
+                    .tag(TAG).upString(json.toString())
                     .execute(new StringCallback() {
                         @Override
                         public void onSuccess(Response<String> response) {
